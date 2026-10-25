@@ -1,10 +1,9 @@
 {
   "name": "Block Destroyer",
   "short_name": "BlockDestroyer",
-  "description": "Juego estilo Tetris arcade con destrucción de bloques",
+  "description": "Juego estilo Tetris arcade con destruccion de bloques",
   "start_url": "./index.html",
-  "display": "fullscreen",
-  "display_override": ["fullscreen", "standalone"],
+  "display": "standalone",
   "background_color": "#0d1117",
   "theme_color": "#0d1117",
   "orientation": "portrait",
