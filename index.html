@@ -25,7 +25,6 @@
       box-sizing: border-box;
       user-select: none;
       -webkit-user-select: none;
-      touch-action: none;
       margin: 0;
       padding: 0;
     }
@@ -66,6 +65,7 @@
       border: 2px solid var(--border-color);
       border-radius: 12px;
       overflow: hidden;
+      touch-action: none;
     }
 
     canvas {
@@ -116,6 +116,8 @@
       align-items: center;
       justify-content: center;
       position: relative;
+      cursor: pointer;
+      touch-action: none;
     }
 
     .btn-drop-inner {
@@ -185,7 +187,7 @@
       </div>
 
       <div class="touchpad-center" id="touchpad">
-        <div class="btn-drop-inner">◄ SLIDE / 2-TAP ►</div>
+        <div class="btn-drop-inner">◄ DESLIZA / 2-TAP ►</div>
       </div>
 
       <div class="side-widget">
@@ -254,7 +256,8 @@
 
       if (checkCollision(currentX, currentY, currentPiece)) {
         gameOver = true;
-        document.getElementById('modal').classList.remove('hidden');
+        const modal = document.getElementById('modal');
+        if (modal) modal.classList.remove('hidden');
         isPaused = true;
       }
       updateUI();
@@ -421,43 +424,72 @@
       requestAnimationFrame(gameLoop);
     }
 
+    function handleInputStart(clientX) {
+      touchStartX = clientX;
+      const now = Date.now();
+      if (now - lastTapTime < 300) {
+        hardDrop();
+      }
+      lastTapTime = now;
+    }
+
+    function handleInputMove(clientX) {
+      if (isPaused || gameOver) return;
+      const diff = clientX - touchStartX;
+      if (Math.abs(diff) > 20) {
+        if (diff > 0 && !checkCollision(currentX + 1, currentY, currentPiece)) {
+          currentX++;
+        } else if (diff < 0 && !checkCollision(currentX - 1, currentY, currentPiece)) {
+          currentX--;
+        }
+        touchStartX = clientX;
+      }
+    }
+
+    function handleCanvasInteraction(clientX, clientY) {
+      if (isPaused || gameOver) return;
+      const rect = canvas.getBoundingClientRect();
+      const gx = Math.floor((clientX - rect.left) / (rect.width / COLS));
+      const gy = Math.floor((clientY - rect.top) / (rect.height / ROWS));
+      if (gx >= 0 && gx < COLS && gy >= 0 && gy < ROWS) {
+        destroyBlockAt(gx, gy);
+      }
+    }
+
     function setupEventListeners() {
       const touchpad = document.getElementById('touchpad');
 
       touchpad.addEventListener('touchstart', e => {
-        touchStartX = e.touches[0].clientX;
-        const now = Date.now();
-        if (now - lastTapTime < 280) {
-          hardDrop();
-        }
-        lastTapTime = now;
-      }, { passive: true });
+        handleInputStart(e.touches[0].clientX);
+      });
 
       touchpad.addEventListener('touchmove', e => {
-        if (isPaused || gameOver) return;
-        const touchX = e.touches[0].clientX;
-        const diff = touchX - touchStartX;
+        handleInputMove(e.touches[0].clientX);
+      });
 
-        if (Math.abs(diff) > 25) {
-          if (diff > 0 && !checkCollision(currentX + 1, currentY, currentPiece)) {
-            currentX++;
-          } else if (diff < 0 && !checkCollision(currentX - 1, currentY, currentPiece)) {
-            currentX--;
-          }
-          touchStartX = touchX;
-        }
-      }, { passive: true });
+      touchpad.addEventListener('mousedown', e => {
+        handleInputStart(e.clientX);
+        const onMouseMove = ev => handleInputMove(ev.clientX);
+        const onMouseUp = () => {
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onMouseUp);
+        };
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+      });
 
       canvas.addEventListener('touchstart', e => {
-        if (isPaused || gameOver) return;
-        const rect = canvas.getBoundingClientRect();
         const touch = e.touches[0];
-        const gx = Math.floor((touch.clientX - rect.left) / (rect.width / COLS));
-        const gy = Math.floor((touch.clientY - rect.top) / (rect.height / ROWS));
-        destroyBlockAt(gx, gy);
-      }, { passive: true });
+        handleCanvasInteraction(touch.clientX, touch.clientY);
+      });
 
-      document.getElementById('btn-start').addEventListener('click', () => {
+      canvas.addEventListener('mousedown', e => {
+        handleCanvasInteraction(e.clientX, e.clientY);
+      });
+
+      document.getElementById('btn-start').addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
         document.getElementById('modal').classList.add('hidden');
         resetGame();
         isPaused = false;
