@@ -21,19 +21,11 @@
       --color-4: #FF0055;
     }
 
-    .light-theme {
-      --bg-color: #f4f6f8;
-      --card-bg: #ffffff;
-      --accent: #1f883d;
-      --text-color: #1f2328;
-      --border-color: #d0d7de;
-    }
-
     * {
       box-sizing: border-box;
       user-select: none;
       -webkit-user-select: none;
-      touch-action: manipulation;
+      touch-action: none;
       margin: 0;
       padding: 0;
     }
@@ -45,9 +37,10 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      min-height: 100vh;
+      justify-content: space-between;
       height: 100vh;
+      height: 100svh;
+      padding: env(safe-area-inset-top) 8px env(safe-area-inset-bottom) 8px;
       overflow: hidden;
     }
 
@@ -57,15 +50,15 @@
       align-items: center;
       justify-content: space-between;
       width: 100%;
-      max-width: 420px;
-      height: 100vh;
-      padding: 8px;
+      max-width: 400px;
+      height: 100%;
+      gap: 6px;
     }
 
     .canvas-wrapper {
       position: relative;
       width: 100%;
-      flex-grow: 1;
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -73,7 +66,6 @@
       border: 2px solid var(--border-color);
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
     }
 
     canvas {
@@ -85,29 +77,27 @@
 
     .bottom-panel {
       display: grid;
-      grid-template-columns: 1fr 1.8fr 1fr;
+      grid-template-columns: 1fr 2fr 1fr;
       gap: 6px;
       width: 100%;
-      margin-top: 6px;
+      height: 75px;
+      min-height: 75px;
     }
 
     .side-widget {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 10px;
-      padding: 8px 4px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       text-align: center;
-      gap: 4px;
     }
 
     .w-label {
-      font-size: 0.6rem;
+      font-size: 0.55rem;
       opacity: 0.7;
-      text-transform: uppercase;
       font-weight: bold;
     }
 
@@ -120,34 +110,33 @@
     .touchpad-center {
       background: var(--card-bg);
       border: 2px solid var(--border-color);
-      border-radius: 12px;
+      border-radius: 10px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 6px;
-      cursor: pointer;
+      position: relative;
     }
 
     .btn-drop-inner {
-      width: 100%;
-      height: 100%;
+      width: 90%;
+      height: 80%;
       background: linear-gradient(135deg, #ff0055, #ff5500);
       color: #fff;
       border: none;
       border-radius: 8px;
       font-weight: 800;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 10px rgba(255,0,85,0.4);
+      pointer-events: none;
     }
 
     .modal {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.9);
+      background: rgba(0, 0, 0, 0.92);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -158,40 +147,20 @@
     .modal-content {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
-      padding: 24px;
+      padding: 20px;
       border-radius: 16px;
-      max-width: 380px;
+      max-width: 340px;
       width: 100%;
       text-align: center;
       display: flex;
       flex-direction: column;
-      gap: 16px;
-    }
-
-    .setting-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      background: rgba(255,255,255,0.03);
-      padding: 10px;
-      border-radius: 8px;
-    }
-
-    .btn-opt {
-      background: var(--border-color);
-      color: var(--text-color);
-      border: none;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
+      gap: 14px;
     }
 
     .btn-play {
       background: var(--accent);
       color: #fff;
-      padding: 14px;
+      padding: 12px;
       font-size: 1.1rem;
       font-weight: bold;
       border: none;
@@ -216,13 +185,13 @@
       </div>
 
       <div class="touchpad-center" id="touchpad">
-        <button class="btn-drop-inner" id="btn-drop">⚡ DROP / 2-TAP</button>
+        <div class="btn-drop-inner">◄ SLIDE / 2-TAP ►</div>
       </div>
 
       <div class="side-widget">
         <span class="w-label" id="lbl-level">NIVEL</span>
         <span class="w-val" id="val-level">1</span>
-        <span class="w-label" id="lbl-score" style="font-size:0.55rem;">0 PTS</span>
+        <span class="w-label" id="lbl-score" style="font-size:0.5rem;">0 PTS</span>
       </div>
     </div>
   </div>
@@ -230,35 +199,12 @@
   <div class="modal" id="modal">
     <div class="modal-content">
       <h2 style="font-weight:900; color: var(--color-2);">BLOCK DESTROYER</h2>
-
-      <div class="setting-row">
-        <span>🌐 Idioma:</span>
-        <button class="btn-opt" id="btn-lang">ES</button>
-      </div>
-
-      <div class="setting-row">
-        <span>🎨 Tema:</span>
-        <button class="btn-opt" id="btn-theme">🌙 Oscuro</button>
-      </div>
-
-      <div class="setting-row">
-        <span>🔊 Volumen:</span>
-        <input type="range" id="volSlider" min="0" max="100" value="80" style="width:100px;">
-      </div>
-
-      <button class="btn-play" id="btn-start">JUGAR / PLAY</button>
+      <p style="font-size:0.8rem; opacity:0.8;">Toca los bloques para destruirlos. Desliza en el panel inferior para mover la pieza y haz doble toque para caída rápida.</p>
+      <button class="btn-play" id="btn-start">¡EMPEZAR A JUGAR!</button>
     </div>
   </div>
 
   <script>
-    const i18n = {
-      es: { uses: "CARGA", level: "NIVEL", play: "JUGAR / PLAY", themeD: "🌙 Oscuro", themeL: "☀️ Claro" },
-      en: { uses: "CHARGE", level: "LEVEL", play: "START / PLAY", themeD: "🌙 Dark", themeL: "☀️ Light" },
-      fr: { uses: "CHARGE", level: "NIVEAU", play: "JOUER", themeD: "🌙 Sombre", themeL: "☀️ Clair" },
-      pt: { uses: "CARGA", level: "NÍVEL", play: "JOGAR", themeD: "🌙 Escuro", themeL: "☀️ Claro" }
-    };
-
-    let currentLang = 'es';
     const COLS = 8, ROWS = 12, BLOCK_SIZE = 40;
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -275,12 +221,12 @@
     let score = 0, lines = 0, level = 1, gameOver = false, isPaused = true;
     let currentPiece = null, currentX = 3, currentY = 0, currentNum = 1, remainingUses = 1;
     let dropInterval = 500, lastDropTime = 0;
-    let audioCtx = null, masterGain = null, masterVol = 0.8;
-    let lastTapTime = 0;
+    let touchStartX = 0, lastTapTime = 0;
 
     function init() {
       setupEventListeners();
       resetGame();
+      requestAnimationFrame(gameLoop);
     }
 
     function resetGame() {
@@ -355,7 +301,6 @@
         score += cleared * 100 * level;
         level = Math.floor(lines / 5) + 1;
         dropInterval = Math.max(150, 500 - (level - 1) * 45);
-        playTone(587, 0.2);
         updateUI();
       }
     }
@@ -398,7 +343,6 @@
       if (hitActive || hitGrid) {
         remainingUses--;
         score += 25 * level;
-        playTone(440 + (4 - remainingUses) * 110, 0.1);
         updateUI();
 
         if (currentPiece.every(row => row.every(cell => cell === 0))) {
@@ -477,43 +421,50 @@
       requestAnimationFrame(gameLoop);
     }
 
-    function initAudio() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        masterGain = audioCtx.createGain();
-        masterGain.gain.value = masterVol;
-        masterGain.connect(audioCtx.destination);
-      }
-    }
-
-    function playTone(freq, duration) {
-      if (!audioCtx || masterVol <= 0) return;
-      try {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'square';
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(masterGain);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
-      } catch(e) {}
-    }
-
     function setupEventListeners() {
       const touchpad = document.getElementById('touchpad');
-      touchpad.addEventListener('click', () => {
-        initAudio();
+
+      touchpad.addEventListener('touchstart', e => {
+        touchStartX = e.touches[0].clientX;
         const now = Date.now();
-        if (now - lastTapTime < 300) {
+        if (now - lastTapTime < 280) {
           hardDrop();
         }
         lastTapTime = now;
-      });
+      }, { passive: true });
 
-      canvas.addEventListener('click', e => {
-        initAudio();
+      touchpad.addEventListener('touchmove', e => {
+        if (isPaused || gameOver) return;
+        const touchX = e.touches[0].clientX;
+        const diff = touchX - touchStartX;
+
+        if (Math.abs(diff) > 25) {
+          if (diff > 0 && !checkCollision(currentX + 1, currentY, currentPiece)) {
+            currentX++;
+          } else if (diff < 0 && !checkCollision(currentX - 1, currentY, currentPiece)) {
+            currentX--;
+          }
+          touchStartX = touchX;
+        }
+      }, { passive: true });
+
+      canvas.addEventListener('touchstart', e => {
+        if (isPaused || gameOver) return;
         const rect = canvas.getBoundingClientRect();
-        const gx = Math.floor((e.clientX - rect.left) / (rect.width /
+        const touch = e.touches[0];
+        const gx = Math.floor((touch.clientX - rect.left) / (rect.width / COLS));
+        const gy = Math.floor((touch.clientY - rect.top) / (rect.height / ROWS));
+        destroyBlockAt(gx, gy);
+      }, { passive: true });
+
+      document.getElementById('btn-start').addEventListener('click', () => {
+        document.getElementById('modal').classList.add('hidden');
+        resetGame();
+        isPaused = false;
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
