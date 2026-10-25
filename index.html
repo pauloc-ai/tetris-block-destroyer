@@ -65,7 +65,7 @@
       border: 2px solid var(--border-color);
       border-radius: 12px;
       overflow: hidden;
-      touch-action: none;
+      cursor: pointer;
     }
 
     canvas {
@@ -117,7 +117,6 @@
       justify-content: center;
       position: relative;
       cursor: pointer;
-      touch-action: none;
     }
 
     .btn-drop-inner {
@@ -142,7 +141,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 100;
+      z-index: 1000;
       padding: 20px;
     }
 
@@ -162,12 +161,13 @@
     .btn-play {
       background: var(--accent);
       color: #fff;
-      padding: 12px;
+      padding: 14px;
       font-size: 1.1rem;
       font-weight: bold;
       border: none;
       border-radius: 10px;
       cursor: pointer;
+      z-index: 1001;
     }
 
     .hidden { display: none !important; }
@@ -187,7 +187,7 @@
       </div>
 
       <div class="touchpad-center" id="touchpad">
-        <div class="btn-drop-inner">◄ DESLIZA / 2-TAP ►</div>
+        <div class="btn-drop-inner">◄ DESLIZA / TECLAS ►</div>
       </div>
 
       <div class="side-widget">
@@ -201,7 +201,7 @@
   <div class="modal" id="modal">
     <div class="modal-content">
       <h2 style="font-weight:900; color: var(--color-2);">BLOCK DESTROYER</h2>
-      <p style="font-size:0.8rem; opacity:0.8;">Toca los bloques para destruirlos. Desliza en el panel inferior para mover la pieza y haz doble toque para caída rápida.</p>
+      <p style="font-size:0.8rem; opacity:0.8;">Toca/haz clic en los bloques para destruirlos.<br>Usa las flechas del teclado o el panel inferior para mover las piezas.</p>
       <button class="btn-play" id="btn-start">¡EMPEZAR A JUGAR!</button>
     </div>
   </div>
@@ -459,13 +459,8 @@
     function setupEventListeners() {
       const touchpad = document.getElementById('touchpad');
 
-      touchpad.addEventListener('touchstart', e => {
-        handleInputStart(e.touches[0].clientX);
-      });
-
-      touchpad.addEventListener('touchmove', e => {
-        handleInputMove(e.touches[0].clientX);
-      });
+      touchpad.addEventListener('touchstart', e => handleInputStart(e.touches[0].clientX));
+      touchpad.addEventListener('touchmove', e => handleInputMove(e.touches[0].clientX));
 
       touchpad.addEventListener('mousedown', e => {
         handleInputStart(e.clientX);
@@ -478,22 +473,30 @@
         window.addEventListener('mouseup', onMouseUp);
       });
 
-      canvas.addEventListener('touchstart', e => {
-        const touch = e.touches[0];
-        handleCanvasInteraction(touch.clientX, touch.clientY);
+      canvas.addEventListener('touchstart', e => handleCanvasInteraction(e.touches[0].clientX, e.touches[0].clientY));
+      canvas.addEventListener('mousedown', e => handleCanvasInteraction(e.clientX, e.clientY));
+
+      document.addEventListener('keydown', e => {
+        if (isPaused || gameOver) return;
+        if (e.key === 'ArrowLeft' || e.key === 'a') {
+          if (!checkCollision(currentX - 1, currentY, currentPiece)) currentX--;
+        } else if (e.key === 'ArrowRight' || e.key === 'd') {
+          if (!checkCollision(currentX + 1, currentY, currentPiece)) currentX++;
+        } else if (e.key === ' ' || e.key === 'ArrowDown') {
+          hardDrop();
+        }
       });
 
-      canvas.addEventListener('mousedown', e => {
-        handleCanvasInteraction(e.clientX, e.clientY);
-      });
-
-      document.getElementById('btn-start').addEventListener('click', e => {
-        e.preventDefault();
-        e.stopPropagation();
+      const startBtn = document.getElementById('btn-start');
+      const startGame = (e) => {
+        if (e) { e.preventDefault(); e.stopPropagation(); }
         document.getElementById('modal').classList.add('hidden');
         resetGame();
         isPaused = false;
-      });
+      };
+
+      startBtn.addEventListener('click', startGame);
+      startBtn.addEventListener('touchstart', startGame);
     }
 
     init();
