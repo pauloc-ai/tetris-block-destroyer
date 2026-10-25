@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Block Destroyer</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root {
+      --bg-color: #0d1117;
+      --card-bg: #161b22;
+      --accent: #238636;
+      --text-color: #f0f6fc;
+      --border-color: #30363d;
+      --color-1: #00FF66;
+      --color-2: #00E5FF;
+      --color-3: #FFD700;
+      --color-4: #FF0055;
+    }
+
+    .light-theme {
+      --bg-color: #f4f6f8;
+      --card-bg: #ffffff;
+      --accent: #1f883d;
+      --text-color: #1f2328;
+      --border-color: #d0d7de;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .game-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      padding: 8px;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    }
+
+    canvas {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .bottom-panel {
+      display: grid;
+      grid-template-columns: 1fr 1.8fr 1fr;
+      gap: 6px;
+      width: 100%;
+      margin-top: 6px;
+    }
+
+    .side-widget {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 8px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 4px;
+    }
+
+    .w-label {
+      font-size: 0.6rem;
+      opacity: 0.7;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    .w-val {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--color-2);
+    }
+
+    .touchpad-center {
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      cursor: pointer;
+    }
+
+    .btn-drop-inner {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #ff0055, #ff5500);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(255,0,85,0.4);
+    }
+
+    .modal {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 24px;
+      border-radius: 16px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(255,255,255,0.03);
+      padding: 10px;
+      border-radius: 8px;
+    }
+
+    .btn-opt {
+      background: var(--border-color);
+      color: var(--text-color);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-play {
+      background: var(--accent);
+      color: #fff;
+      padding: 14px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div class="game-container">
+    <div class="canvas-wrapper">
+      <canvas id="gameCanvas" width="320" height="480"></canvas>
+    </div>
+
+    <div class="bottom-panel">
+      <div class="side-widget">
+        <span class="w-label" id="lbl-uses">CARGA</span>
+        <span class="w-val" id="val-uses" style="color: var(--color-1);">0</span>
+      </div>
+
+      <div class="touchpad-center" id="touchpad">
+        <button class="btn-drop-inner" id="btn-drop">⚡ DROP / 2-TAP</button>
+      </div>
+
+      <div class="side-widget">
+        <span class="w-label" id="lbl-level">NIVEL</span>
+        <span class="w-val" id="val-level">1</span>
+        <span class="w-label" id="lbl-score" style="font-size:0.55rem;">0 PTS</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h2 style="font-weight:900; color: var(--color-2);">BLOCK DESTROYER</h2>
+
+      <div class="setting-row">
+        <span>🌐 Idioma:</span>
+        <button class="btn-opt" id="btn-lang">ES</button>
+      </div>
+
+      <div class="setting-row">
+        <span>🎨 Tema:</span>
+        <button class="btn-opt" id="btn-theme">🌙 Oscuro</button>
+      </div>
+
+      <div class="setting-row">
+        <span>🔊 Volumen:</span>
+        <input type="range" id="volSlider" min="0" max="100" value="80" style="width:100px;">
+      </div>
+
+      <button class="btn-play" id="btn-start">JUGAR / PLAY</button>
+    </div>
+  </div>
+
+  <script>
+    const i18n = {
+      es: { uses: "CARGA", level: "NIVEL", play: "JUGAR / PLAY", themeD: "🌙 Oscuro", themeL: "☀️ Claro" },
+      en: { uses: "CHARGE", level: "LEVEL", play: "START / PLAY", themeD: "🌙 Dark", themeL: "☀️ Light" },
+      fr: { uses: "CHARGE", level: "NIVEAU", play: "JOUER", themeD: "🌙 Sombre", themeL: "☀️ Clair" },
+      pt: { uses: "CARGA", level: "NÍVEL", play: "JOGAR", themeD: "🌙 Escuro", themeL: "☀️ Claro" }
+    };
+
+    let currentLang = 'es';
+    const COLS = 8, ROWS = 12, BLOCK_SIZE = 40;
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const SHAPES = [
+      [[1, 1, 1, 1]], [[1, 1], [1, 1]], [[0, 1, 0], [1, 1, 1]],
+      [[0, 1, 1], [1, 1, 0]], [[1, 1, 0], [0, 1, 1]],
+      [[1, 0, 0], [1, 1, 1]], [[0, 0, 1], [1, 1, 1]]
+    ];
+
+    const COLOR_MAP = { 1: '#00FF66', 2: '#00E5FF', 3: '#FFD700', 4: '#FF0055' };
+
+    let grid = Array(ROWS).fill(null).map(() => Array(COLS).fill(0));
+    let score = 0, lines = 0, level = 1, gameOver = false, isPaused = true;
+    let currentPiece = null, currentX = 3, currentY = 0, currentNum = 1, remainingUses = 1;
+    let dropInterval = 500, lastDropTime = 0;
+    let audioCtx = null, masterGain = null, masterVol = 0.8;
+    let lastTapTime = 0;
+
+    function init() {
+      setupEventListeners();
+      resetGame();
+    }
+
+    function resetGame() {
+      grid = Array(ROWS).fill(null).map(() => Array(COLS).fill(0));
+      score = 0; lines = 0; level = 1; dropInterval = 500; gameOver = false;
+      spawnPiece();
+      updateUI();
+    }
+
+    function getRandomNumber() {
+      const rand = Math.random() * 100;
+      if (rand < 50) return 1;
+      if (rand < 80) return 2;
+      if (rand < 95) return 3;
+      return 4;
+    }
+
+    function spawnPiece() {
+      const shapeIdx = Math.floor(Math.random() * SHAPES.length);
+      currentPiece = SHAPES[shapeIdx].map(row => [...row]);
+      currentNum = getRandomNumber();
+      remainingUses = currentNum;
+      currentX = Math.floor((COLS - currentPiece[0].length) / 2);
+      currentY = 0;
+
+      if (checkCollision(currentX, currentY, currentPiece)) {
+        gameOver = true;
+        document.getElementById('modal').classList.remove('hidden');
+        isPaused = true;
+      }
+      updateUI();
+    }
+
+    function checkCollision(x, y, piece) {
+      for (let r = 0; r < piece.length; r++) {
+        for (let c = 0; c < piece[r].length; c++) {
+          if (piece[r][c]) {
+            let newX = x + c, newY = y + r;
+            if (newX < 0 || newX >= COLS || newY >= ROWS) return true;
+            if (newY >= 0 && grid[newY][newX] !== 0) return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function lockPiece() {
+      for (let r = 0; r < currentPiece.length; r++) {
+        for (let c = 0; c < currentPiece[r].length; c++) {
+          if (currentPiece[r][c]) {
+            let gy = currentY + r, gx = currentX + c;
+            if (gy >= 0) grid[gy][gx] = currentNum;
+          }
+        }
+      }
+      clearLines();
+      spawnPiece();
+    }
+
+    function clearLines() {
+      let cleared = 0;
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (grid[r].every(cell => cell !== 0)) {
+          grid.splice(r, 1);
+          grid.unshift(Array(COLS).fill(0));
+          cleared++;
+          r++;
+        }
+      }
+      if (cleared > 0) {
+        lines += cleared;
+        score += cleared * 100 * level;
+        level = Math.floor(lines / 5) + 1;
+        dropInterval = Math.max(150, 500 - (level - 1) * 45);
+        playTone(587, 0.2);
+        updateUI();
+      }
+    }
+
+    function applyGravity() {
+      let moved = false;
+      for (let r = ROWS - 2; r >= 0; r--) {
+        for (let c = 0; c < COLS; c++) {
+          if (grid[r][c] !== 0 && grid[r+1][c] === 0) {
+            grid[r+1][c] = grid[r][c];
+            grid[r][c] = 0;
+            moved = true;
+          }
+        }
+      }
+      if (moved) setTimeout(applyGravity, 80);
+    }
+
+    function destroyBlockAt(gx, gy) {
+      if (remainingUses <= 0) return;
+
+      let hitActive = false;
+      for (let r = 0; r < currentPiece.length; r++) {
+        for (let c = 0; c < currentPiece[r].length; c++) {
+          if (currentPiece[r][c] && (currentX + c === gx) && (currentY + r === gy)) {
+            currentPiece[r][c] = 0;
+            hitActive = true;
+            break;
+          }
+        }
+      }
+
+      let hitGrid = false;
+      if (!hitActive && grid[gy] && grid[gy][gx] !== 0) {
+        grid[gy][gx] = 0;
+        hitGrid = true;
+        applyGravity();
+      }
+
+      if (hitActive || hitGrid) {
+        remainingUses--;
+        score += 25 * level;
+        playTone(440 + (4 - remainingUses) * 110, 0.1);
+        updateUI();
+
+        if (currentPiece.every(row => row.every(cell => cell === 0))) {
+          spawnPiece();
+        }
+      }
+    }
+
+    function hardDrop() {
+      while (!checkCollision(currentX, currentY + 1, currentPiece)) {
+        currentY++;
+      }
+      lockPiece();
+    }
+
+    function updateUI() {
+      document.getElementById('val-uses').innerText = remainingUses;
+      document.getElementById('val-uses').style.color = COLOR_MAP[currentNum] || '#fff';
+      document.getElementById('val-level').innerText = level;
+      document.getElementById('lbl-score').innerText = score + " PTS";
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          ctx.strokeRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+        }
+      }
+
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (grid[r][c] !== 0) drawBlock(c, r, grid[r][c]);
+        }
+      }
+
+      if (currentPiece && !gameOver) {
+        for (let r = 0; r < currentPiece.length; r++) {
+          for (let c = 0; c < currentPiece[r].length; c++) {
+            if (currentPiece[r][c]) drawBlock(currentX + c, currentY + r, currentNum, true);
+          }
+        }
+      }
+    }
+
+    function drawBlock(x, y, num, isActive = false) {
+      const px = x * BLOCK_SIZE, py = y * BLOCK_SIZE;
+      const color = COLOR_MAP[num] || '#00FF66';
+
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = isActive ? 12 : 4;
+      ctx.fillRect(px + 2, py + 2, BLOCK_SIZE - 4, BLOCK_SIZE - 4);
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(px + 4, py + 4, BLOCK_SIZE - 8, BLOCK_SIZE - 8);
+      ctx.restore();
+    }
+
+    function gameLoop(timestamp) {
+      if (!isPaused && !gameOver) {
+        if (timestamp - lastDropTime > dropInterval) {
+          if (!checkCollision(currentX, currentY + 1, currentPiece)) {
+            currentY++;
+          } else {
+            lockPiece();
+          }
+          lastDropTime = timestamp;
+        }
+      }
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = masterVol;
+        masterGain.connect(audioCtx.destination);
+      }
+    }
+
+    function playTone(freq, duration) {
+      if (!audioCtx || masterVol <= 0) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch(e) {}
+    }
+
+    function setupEventListeners() {
+      const touchpad = document.getElementById('touchpad');
+      touchpad.addEventListener('click', () => {
+        initAudio();
+        const now = Date.now();
+        if (now - lastTapTime < 300) {
+          hardDrop();
+        }
+        lastTapTime = now;
+      });
+
+      canvas.addEventListener('click', e => {
+        initAudio();
+        const rect = canvas.getBoundingClientRect();
+        const gx = Math.floor((e.clientX - rect.left) / (rect.width / COLS));
+        const gy = Math.floor((e.clientY - rect.top) / (rect.height / ROWS));
+        destroyBlockAt(gx, gy);
+      });
+
+      document.addEventListener('keydown', e => {
+        if (isPaused || gameOver) return;
+        if (e.key === 'ArrowLeft' || e.key === 'a') {
+          if (!checkCollision(currentX - 1, currentY, currentPiece)) currentX--;
+        } else if (e.key === 'ArrowRight' || e.key === 'd') {
+          if (!checkCollision(currentX + 1, currentY, currentPiece)) currentX++;
+        } else if (e.key === ' ') {
+          hardDrop();
+        }
+      });
+
+      document.getElementById('volSlider').addEventListener('input', e => {
+        masterVol = e.target.value / 100;
+        if (masterGain) masterGain.gain.value = masterVol;
+      });
+
+      document.getElementById('btn-lang').addEventListener('click', () => {
+        const langs = ['es', 'en', 'fr', 'pt'];
+        let nextIdx = (langs.indexOf(currentLang) + 1) % langs.length;
+        currentLang = langs[nextIdx];
+        document.getElementById('btn-lang').innerText = currentLang.toUpperCase();
+        const t = i18n[currentLang];
+        document.getElementById('lbl-uses').innerText = t.uses;
+        document.getElementById('lbl-level').innerText = t.level;
+        document.getElementById('btn-start').innerText = t.play;
+      });
+
+      document.getElementById('btn-theme').addEventListener('click', () => {
+        document.body.classList.toggle('light-theme');
+        const isLight = document.body.classList.contains('light-theme');
+        document.getElementById('btn-theme').innerText = isLight ? i18n[currentLang].themeL : i18n[currentLang].themeD;
+      });
+
+      document.getElementById('btn-start').addEventListener('click', () => {
+        initAudio();
+        document.getElementById('modal').classList.add('hidden');
+        resetGame();
+        isPaused = false;
+      });
+    }
+
+    init();
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>
